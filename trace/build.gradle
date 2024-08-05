@@ -5,11 +5,11 @@ plugins {
 
 android {
     namespace 'com.joychic.trace'
-    compileSdk 33
+    compileSdk rootProject.ext.compileSdk
 
     defaultConfig {
-        minSdk 24
-        targetSdk 33
+        minSdk rootProject.ext.minSdk
+        targetSdk rootProject.ext.targetSdk
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
@@ -46,7 +46,14 @@ android {
     buildFeatures {
         prefab true
     }
-    ndkVersion '25.2.9519653'
+    ndkVersion rootProject.ext.ndkVersion
+
+    publishing {
+        singleVariant('release') {
+            withSourcesJar()
+            withJavadocJar()
+        }
+    }
 }
 
 dependencies {
@@ -54,6 +61,8 @@ dependencies {
     implementation 'io.github.hexhacking:xdl:2.1.1'
     implementation 'io.github.hexhacking:xunwind:2.0.0'
     testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
 }
+
+apply from: rootProject.file('gradle/publish.gradle')

@@ -4,3 +4,30 @@ plugins {
     id 'com.android.library' version '8.0.2' apply false
     id 'org.jetbrains.kotlin.android' version '1.8.20' apply false
 }
+
+ext {
+    minSdk = 21
+    compileSdk = 34
+    targetSdk = 34
+    ndkVersion = "25.2.9519653"
+
+    POM_GROUP_ID = "io.github.joychic"
+//    POM_GROUP_ID = "io.gitee.joychic"
+    POM_ARTIFACT_ID = "TraceTools"
+    POM_VERSION_NAME = "0.0.1-SNAPSHOT"
+
+    POM_NAME = "Android TraceTools"
+    POM_DESCRIPTION = "a perfetto trace tools for android."
+    POM_URL = "https://github.com/joychic/TraceTools"
+    POM_INCEPTION_YEAR = "2024"
+    POM_PACKAGING = "aar"
+
+    POM_SCM_CONNECTION = "https://github.com/joychic/TraceTools.git"
+
+    POM_ISSUE_SYSTEM = "github"
+    POM_ISSUE_URL = "https://github.com/joychic/TraceTools/issues"
+
+    POM_LICENCE_NAME = "The MIT License"
+    POM_LICENCE_URL = "https://opensource.org/licenses/MIT"
+    POM_LICENCE_DIST = "repo"
+}
