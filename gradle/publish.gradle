@@ -55,6 +55,13 @@ project.afterEvaluate {
                             distribution = POM_LICENCE_DIST
                         }
                     }
+
+                    developers {
+                        developer {
+                            name = POM_DEVELOPER_NAME
+                            email = POM_DEVELOPER_EMAIL
+                        }
+                    }
                 }
             }
         }
