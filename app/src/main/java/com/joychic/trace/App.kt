@@ -7,8 +7,8 @@ class App : Application() {
         super.onCreate()
         MTrace.start(
             MTrace.ConfigBuilder()
-                .isDebug(true)
-                .setMethodName("com.joychic.trace")
+                .isDebug(false)
+                .setMethodName(packageName)
                 .build()
         )
     }
