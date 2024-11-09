@@ -11,7 +11,7 @@ cmake_minimum_required(VERSION 3.4.1)
 #execute_process(COMMAND rm ${CMAKE_CURRENT_SOURCE_DIR}/src/main/libs/${ANDROID_ABI}/)
 #set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/main/libs/${ANDROID_ABI}/)
 find_package(shadowhook REQUIRED CONFIG)
-find_package(xdl REQUIRED CONFIG)
+find_package(xunwind REQUIRED CONFIG)
 
 aux_source_directory(cpp TRACE)
 include_directories(
@@ -29,8 +29,6 @@ add_library( # Sets the name of the library.
         # Sets the library as a shared library.
         SHARED
         ${TRACE}
-        cpp/log.h
-        cpp/Trace.h
         )
 
 
@@ -58,5 +56,6 @@ target_link_libraries( # Specifies the target library.
         # included in the NDK.
         ${log-lib}
         shadowhook::shadowhook
-        xdl::xdl)
+        xunwind::xunwind
+)
 

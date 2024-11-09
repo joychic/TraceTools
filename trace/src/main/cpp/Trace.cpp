@@ -5,7 +5,9 @@
 #include "Trace.h"
 #include "log.h"
 #include "ArtMethod.h"
-
+#include "Util.h"
+#include <sys/prctl.h>
+#include <pthread.h>
 
 thread_local std::stack<std::string> words;
 thread_local std::stack<bool> key;
@@ -57,7 +59,7 @@ void executeSwitchImplAsm_proxy(SwitchImplContext *ctx, void *a, void *jvalue) {
     SHADOWHOOK_STACK_SCOPE();
     SHADOWHOOK_ALLOW_REENTRANT();
     auto *artMethod = reinterpret_cast<ArtMethod *>(ctx->shadow_frame->method_);
-    std::string method = artMethod->PrettyMethod(artMethod, false);
+    std::string method = ArtMethod::prettyMethod(artMethod, false);
     bool trace = myTrace.ATrace_before("executeSwitchImplAsm_proxy", method);
     SHADOWHOOK_CALL_PREV(executeSwitchImplAsm_proxy, ctx, a, jvalue);
     myTrace.ATrace_end("executeSwitchImplAsm_proxy", trace, method);
@@ -76,7 +78,7 @@ bool ExecuteMterpImpl_proxy(void *thread, void *shadowframe, void *a, void *b) {
     SHADOWHOOK_STACK_SCOPE();
     SHADOWHOOK_ALLOW_REENTRANT();
     auto *artMethod = reinterpret_cast<ArtMethod *>(((shadowframet *) (a))->method_);
-    std::string method = artMethod->PrettyMethod(artMethod, false);
+    std::string method = ArtMethod::prettyMethod(artMethod, false);
     bool trace = myTrace.ATrace_before("executeMterpImpl_proxy", method);
     bool res = SHADOWHOOK_CALL_PREV(ExecuteMterpImpl_proxy, thread, shadowframe, a, b);
     myTrace.ATrace_end("executeMterpImpl_proxy", trace, method);
@@ -87,7 +89,7 @@ bool ExecuteMterpImpl_proxy(void *thread, void *shadowframe, void *a, void *b) {
 size_t NterpGetMethod_proxy(void *self, ArtMethod *artMethod, const uint16_t *dex_pc_ptr) {
     SHADOWHOOK_STACK_SCOPE();
     SHADOWHOOK_ALLOW_REENTRANT();
-    std::string method = artMethod->PrettyMethod(artMethod, false);
+    std::string method = ArtMethod::prettyMethod(artMethod, false);
     bool trace = myTrace.ATrace_before("NterpGetMethod_proxy", method);
     size_t re = SHADOWHOOK_CALL_PREV(NterpGetMethod_proxy, self, artMethod, dex_pc_ptr);
     myTrace.ATrace_end("NterpGetMethod_proxy", trace, method);
@@ -98,7 +100,7 @@ size_t NterpGetMethod_proxy(void *self, ArtMethod *artMethod, const uint16_t *de
 void *NterpHotMethod_proxy(ArtMethod *artMethod, uint16_t *dex_pc_ptr, uint32_t *vregs) {
     SHADOWHOOK_STACK_SCOPE();
     SHADOWHOOK_ALLOW_REENTRANT();
-    std::string method = artMethod->PrettyMethod(artMethod, false);
+    std::string method = ArtMethod::prettyMethod(artMethod, false);
     bool trace = myTrace.ATrace_before("NterpHotMethod_proxy", method);
     void *re = SHADOWHOOK_CALL_PREV(NterpHotMethod_proxy, artMethod, dex_pc_ptr, vregs);
     myTrace.ATrace_end("NterpHotMethod_proxy", trace, method);
@@ -119,7 +121,7 @@ void art_quick_invoke_stub_proxy(ArtMethod *artMethod, uint32_t *args, uint32_t 
                                  void *self, void *result, const char *shorty) {
     SHADOWHOOK_STACK_SCOPE();
     SHADOWHOOK_ALLOW_REENTRANT();
-    std::string method = artMethod->PrettyMethod(artMethod, false);
+    std::string method = ArtMethod::prettyMethod(artMethod, false);
     bool trace = myTrace.ATrace_before("art_quick_invoke_stub_proxy", method);
     SHADOWHOOK_CALL_PREV(art_quick_invoke_stub_proxy, artMethod, args, args_size, self,
                          result, shorty);
@@ -141,7 +143,7 @@ void art_quick_invoke_static_stub_proxy(ArtMethod *artMethod, uint32_t *args,
                                         const char *shorty) {
     SHADOWHOOK_STACK_SCOPE();
     SHADOWHOOK_ALLOW_REENTRANT();
-    std::string method = artMethod->PrettyMethod(artMethod, false);
+    std::string method = ArtMethod::prettyMethod(artMethod, false);
     bool trace = myTrace.ATrace_before("art_quick_invoke_static_stub_proxy", method);
     SHADOWHOOK_CALL_PREV(art_quick_invoke_static_stub_proxy, artMethod, args, args_size, self,
                          result, shorty);
@@ -154,21 +156,48 @@ bool CanRuntimeUseNterp_proxy() {
     return false;
 }
 
+//
+ALWAYS_INLINE void hookThreadStart(void *arg) {
+    auto *hookArg = (StartRtnArg *) arg;
+    void *(*start_rtn)(void *) = hookArg->start_rtn;
+    void *routine_arg = hookArg->arg;
+    delete hookArg;
+    char thread_name[16]{};
+    prctl(PR_GET_NAME, thread_name);
+    LOGI("HookThreadStart %s", thread_name);
+    start_rtn(routine_arg);
+}
+
+int pthread_create_proxy(pthread_t *pthread_ptr, pthread_attr_t const *attr,
+                         void *(*start_routine)(void *), void *arg) {
+    SHADOWHOOK_STACK_SCOPE();
+    myTrace.beginSection("pthread_create_proxy");
+//    auto *hook_arg = new StartRtnArg(arg, start_routine);
+//    int r = SHADOWHOOK_CALL_PREV(pthread_create_proxy, pthread_ptr, attr,
+//                                 reinterpret_cast<void *(*)(void *)>(hookThreadStart), hook_arg);
+    int r = SHADOWHOOK_CALL_PREV(pthread_create_proxy, pthread_ptr, attr, start_routine, arg);
+    myTrace.endSection();
+    pid_t tid = pthread_gettid_np(*pthread_ptr);
+    myTrace.beginSection("pthread_create" + std::to_string(tid));
+    myTrace.endSection();
+    return r;
+}
+
 void Trace::init() {
-    void *handler = xdl_open("libart.so", XDL_DEFAULT);
+    void *handler = shadowhook_dlopen("libart.so");
     ArtMethod::Init(handler);
-    xdl_close(handler);
-    void *libandroid = xdl_open("libandroid.so", XDL_DEFAULT);
+    shadowhook_dlclose(handler);
+    void *libandroid = shadowhook_dlopen("libandroid.so");
     ATrace_beginSection = reinterpret_cast<fp_ATrace_beginSection>(
-            xdl_sym(libandroid, "ATrace_beginSection", nullptr));
+            shadowhook_dlsym(libandroid, "ATrace_beginSection"));
     ATrace_endSection = reinterpret_cast<fp_ATrace_endSection>(
-            xdl_sym(libandroid, "ATrace_endSection", nullptr));
+            shadowhook_dlsym(libandroid, "ATrace_endSection"));
     if (ATrace_beginSection != nullptr && ATrace_endSection != nullptr) {
         isTracingSupported = true;
     } else {
         LOGE("hook Tracing not Supported ");
     }
-    xdl_close(libandroid);
+    shadowhook_dlclose(libandroid);
 }
 
 
@@ -229,7 +258,7 @@ void Trace::hookStart(Config &config) {
                 LOGI("hook CanRuntimeUseNterp_proxy success");
             }
         } else {
-            // todo Nterp 解释器
+            // Nterp 解释器
             stub = shadowhook_hook_sym_name(
                     "libart.so",
                     "NterpGetMethod",
@@ -288,6 +317,22 @@ void Trace::hookStart(Config &config) {
             LOGI("hook art_quick_invoke_static_stub success");
         }
     }
+
+    if (traceConfig.traceNative) {
+        stub = shadowhook_hook_sym_addr(
+                (void *) pthread_create,
+                (void *) pthread_create_proxy,
+                nullptr);
+        if (stub == nullptr) {
+            int err_num = shadowhook_get_errno();
+            const char *err_msg = shadowhook_to_errmsg(err_num);
+            LOGE("hook pthread_create error %d - %s", err_num, err_msg);
+        } else {
+            traceHookList.push_back(stub);
+            LOGI("hook pthread_create success");
+        }
+        // todo io hook,binder hook
+    }
     traceConfig.hook_success = !traceHookList.empty();
 }
 
@@ -300,4 +345,12 @@ void Trace::hookStop() {
         LOGI("unhook %p   %d ", element, err1);
     }
     traceHookList.clear();
+}
+
+void Trace::beginSection(const std::string &method) {
+    ATrace_beginSection(method.c_str());
+}
+
+void Trace::endSection() {
+    ATrace_endSection();
 }

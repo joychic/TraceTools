@@ -1,26 +1,24 @@
 apply plugin: 'maven-publish'
 apply plugin: 'signing'
 
-ext["signing.keyId"] = ''
-ext["signing.password"] = ''
-ext["signing.secretKeyRingFile"] = ''
-ext["ossrhUsername"] = ''
-ext["ossrhPassword"] = ''
+ext["signing.keyId"] = System.getenv('SIGNING_KEY_ID')
+ext["signing.password"] = System.getenv('SIGNING_PASSWORD')
+ext["signing.secretKeyRingFile"] = System.getenv('SIGNING_SECRET_KEY_RING_FILE')
+ext["ossrhUsername"] = System.getenv('OSSRH_USERNAME')
+ext["ossrhPassword"] = System.getenv('OSSRH_PASSWORD')
 
 File secretPropsFile = project.rootProject.file('local.properties')
+File projectPropertiesFile = project.file('gradle.properties')
+Properties p = new Properties()
 if (secretPropsFile.exists()) {
-    Properties p = new Properties()
     p.load(new FileInputStream(secretPropsFile))
-    p.each { name, value ->
-//        println(">>>>>>${name}->${value}")
-        ext[name] = value
-    }
-} else {
-    ext["signing.keyId"] = System.getenv('SIGNING_KEY_ID')
-    ext["signing.password"] = System.getenv('SIGNING_PASSWORD')
-    ext["signing.secretKeyRingFile"] = System.getenv('SIGNING_SECRET_KEY_RING_FILE')
-    ext["ossrhUsername"] = System.getenv('OSSRH_USERNAME')
-    ext["ossrhPassword"] = System.getenv('OSSRH_PASSWORD')
+}
+if (projectPropertiesFile.exists()) {
+    p.load(new FileInputStream(projectPropertiesFile))
+}
+p.each { name, value ->
+    println(">>>>>> ${name} -> ${value}")
+    ext[name] = value
 }
 
 
@@ -76,7 +74,7 @@ project.afterEvaluate {
                 credentials {
                     username ossrhUsername
                     password ossrhPassword
-                    println("credentials >>>>>>${ossrhUsername}->${ossrhPassword}")
+                    println("credentials >>>> ${ossrhUsername}   ${ossrhPassword}")
                 }
 //                authentication {
 //                    header(HttpHeaderAuthentication)

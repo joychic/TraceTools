@@ -1,19 +1,17 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 plugins {
-    id 'com.android.application' version '8.0.2' apply false
-    id 'com.android.library' version '8.0.2' apply false
-    id 'org.jetbrains.kotlin.android' version '1.8.20' apply false
+    alias(libs.plugins.android.application) apply false
+    alias(libs.plugins.kotlin.android) apply false
+    alias(libs.plugins.android.library) apply false
 }
 
 ext {
     minSdk = 21
-    compileSdk = 34
+    compileSdk = 35
     targetSdk = 34
     ndkVersion = "25.2.9519653"
 
     POM_GROUP_ID = "io.gitee.joychic"
-    POM_ARTIFACT_ID = "TraceTools"
-    POM_VERSION_NAME = "0.0.1"
 
     POM_NAME = "Android TraceTools"
     POM_DESCRIPTION = "a perfetto trace tools for android."

@@ -5,12 +5,12 @@
 #include "ArtMethod.h"
 
 bool ArtMethod::Init(void *handler) {
-    return !(ArtMethod::PrettyMethodSym = reinterpret_cast<ArtMethod::PrettyMethodType>(xdl_dsym(
-            handler, "_ZN3art9ArtMethod12PrettyMethodEPS0_b", nullptr))) &&
-           !(ArtMethod::PrettyMethodSym = reinterpret_cast<ArtMethod::PrettyMethodType>(xdl_dsym(
-                   handler, "_ZN3art12PrettyMethodEPNS_9ArtMethodEb", nullptr))) &&
-           !(ArtMethod::PrettyMethodSym = reinterpret_cast<ArtMethod::PrettyMethodType>(xdl_dsym(
-                   handler, "_ZN3art12PrettyMethodEPNS_6mirror9ArtMethodEb", nullptr)));
+    return !(ArtMethod::PrettyMethodSym = reinterpret_cast<ArtMethod::PrettyMethodType>(shadowhook_dlsym(
+            handler, "_ZN3art9ArtMethod12PrettyMethodEPS0_b"))) &&
+           !(ArtMethod::PrettyMethodSym = reinterpret_cast<ArtMethod::PrettyMethodType>(shadowhook_dlsym(
+                   handler, "_ZN3art12PrettyMethodEPNS_9ArtMethodEb"))) &&
+           !(ArtMethod::PrettyMethodSym = reinterpret_cast<ArtMethod::PrettyMethodType>(shadowhook_dlsym(
+                   handler, "_ZN3art12PrettyMethodEPNS_6mirror9ArtMethodEb")));
 }
 
 ArtMethod::PrettyMethodType ArtMethod::PrettyMethodSym = nullptr;

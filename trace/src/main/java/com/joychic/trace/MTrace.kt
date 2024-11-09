@@ -3,20 +3,20 @@ package com.joychic.trace
 import android.os.Debug
 import com.bytedance.shadowhook.ShadowHook
 
-/**
- * Description:
- *
- * @author zhou.junyou
- * Create by:Android Studio
- * Date:2022/9/22
- */
 class MTrace {
     private fun hookStart(config: Config) {
         methodUnHook()
-        methodHook(config.methodName, config.tid, config.depth, config.debug)
+        methodHook(config.methodName, config.tid, config.depth, config.debug, config.traceNative)
     }
 
-    private external fun methodHook(methodName: String, tid: Int, depth: Int, debug: Boolean)
+    private external fun methodHook(
+        methodName: String,
+        tid: Int,
+        depth: Int,
+        debug: Boolean,
+        traceNative: Boolean
+    )
+
     private external fun methodUnHook()
 
     companion object {
@@ -38,11 +38,12 @@ class MTrace {
         }
     }
 
-    class Config constructor(
+    class Config(
         val methodName: String,
         val tid: Int,
         val depth: Int,
-        val debug: Boolean
+        val debug: Boolean,
+        val traceNative: Boolean
     )
 
     class ConfigBuilder {
@@ -50,6 +51,7 @@ class MTrace {
         private var tid: Int = -1
         private var depth: Int = 30
         private var debug: Boolean = false
+        private var traceThread: Boolean = true
 
 
         fun setMethodName(str: String): ConfigBuilder {
@@ -72,12 +74,18 @@ class MTrace {
             return this
         }
 
+        fun traceNative(debug: Boolean): ConfigBuilder {
+            this.traceThread = debug
+            return this
+        }
+
         fun build(): Config {
             return Config(
                 methodName = methodName,
                 tid = tid,
                 depth = depth,
-                debug = debug
+                debug = debug,
+                traceNative = traceThread
             )
         }
     }

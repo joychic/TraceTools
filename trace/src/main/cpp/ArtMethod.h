@@ -8,14 +8,14 @@
 #include "jni.h"
 #include <unistd.h>
 #include <string>
-#include "xdl.h"
+#include "shadowhook.h"
 
 class ArtMethod {
 
 public:
     typedef std::string(*PrettyMethodType)(ArtMethod *thiz, bool with_signature);
 
-    inline std::string PrettyMethod(ArtMethod *thiz, bool with_signature) {
+    static inline std::string prettyMethod(ArtMethod *thiz, bool with_signature) {
         if (thiz == nullptr)
             return "null";
         else if (PrettyMethodSym)

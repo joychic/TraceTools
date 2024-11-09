@@ -1,8 +1,8 @@
 package com.joychic.trace.ui.main
 
-import android.os.Trace
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import kotlin.concurrent.thread
 
 class MainViewModel : ViewModel() {
 
@@ -19,6 +19,8 @@ class MainViewModel : ViewModel() {
     }
 
     fun click4() {
-        Log.d("trace", "4444")
+        thread {
+            Log.d("trace", "4444    ${Thread.currentThread().name}")
+        }
     }
 }

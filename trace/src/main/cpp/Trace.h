@@ -8,7 +8,6 @@
 #include <string>
 #include "jni.h"
 #include "shadowhook.h"
-#include "xdl.h"
 #include "ArtMethod.h"
 #include <stack>
 #include <array>
@@ -22,14 +21,21 @@
 #include <codecvt>
 #include <list>
 
+#ifdef _MSC_VER
+#define ALWAYS_INLINE __forceinline
+#else
+#define ALWAYS_INLINE __attribute__((always_inline)) inline
+#endif
+
 struct Config {
     int filter_tid = -1;
     int filter_depth = 10;
-    std::string filter_key = "";
+    std::string filter_key;
     bool hook_success;
     bool hookQuick = false;
     bool forbiddenNterp = false;
     bool debug = false;
+    bool traceNative = false;
 };
 
 
@@ -52,7 +58,11 @@ public:
 
     void hookStart(Config &config);
 
-    void hookStop();
+    static void hookStop();
+
+    void beginSection(const std::string &method);
+
+    void endSection();
 
 private:
     Config traceConfig;
@@ -69,6 +79,17 @@ private:
 
     typedef void *(*fp_ATrace_endSection)(void);
 
+};
+
+class StartRtnArg {
+public:
+    void *arg;
+    void *(*start_rtn)(void *);
+
+    StartRtnArg(void *arg,  void *(*start_rtn)(void *)) {
+        this->arg = arg;
+        this->start_rtn = start_rtn;
+    }
 };
 
 extern Trace myTrace;
