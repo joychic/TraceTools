@@ -1,7 +1,6 @@
 #include <string>
 #include "jni.h"
 #include "Trace.h"
-#include "Util.h"
 
 typedef jboolean jboolean;
 extern "C" {
@@ -28,16 +27,6 @@ Java_com_joychic_trace_MTrace_methodHook(JNIEnv *env,
 JNIEXPORT  void JNICALL
 Java_com_joychic_trace_MTrace_methodUnHook(JNIEnv *env, jobject clazz) {
     Trace::hookStop();
-}
-
-
-JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
-    JNIEnv *env = nullptr;
-    if (vm->GetEnv((void **) &env, JNI_VERSION_1_6) != JNI_OK) {
-        return JNI_ERR;
-    }
-    Util::Init(vm, env);
-    return JNI_VERSION_1_6;
 }
 }
 

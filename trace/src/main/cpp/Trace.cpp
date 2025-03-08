@@ -1,13 +1,13 @@
 //
-// Created by 驰  蒋 on 2024/7/25.
+// Created by 驰蒋 on 2024/7/25.
 //
 
 #include "Trace.h"
 #include "log.h"
 #include "ArtMethod.h"
-#include "Util.h"
 #include <sys/prctl.h>
 #include <pthread.h>
+#include "shadowhook.h"
 
 thread_local std::stack<std::string> words;
 thread_local std::stack<bool> key;
@@ -29,9 +29,8 @@ bool Trace::ATrace_before(const std::string &tag, const std::string &method) {
         trace = !key.empty() && (words.size() < traceConfig.filter_depth);
         if (trace) {
             words.emplace(method.c_str());
-            void *result = ATrace_beginSection(method.c_str());
-            LOGD(traceConfig.debug, "%s Trace before : %s  %p", tag.c_str(), method.c_str(),
-                 result);
+            ATrace_beginSection(method.c_str());
+            LOGD(traceConfig.debug, "%s Trace before : %s ", tag.c_str(), method.c_str());
         }
     }
     return trace;
@@ -45,8 +44,8 @@ void Trace::ATrace_end(const std::string &tag, bool trace, const std::string &me
         key.pop();
     }
     words.pop();
-    void *result = ATrace_endSection();
-    LOGD(traceConfig.debug, "%s Trace end : %s  %p", tag.c_str(), method.c_str(), result);
+    ATrace_endSection();
+    LOGD(traceConfig.debug, "%s Trace end : %s  ", tag.c_str(), method.c_str());
 }
 
 /**
@@ -162,20 +161,21 @@ ALWAYS_INLINE void hookThreadStart(void *arg) {
     void *(*start_rtn)(void *) = hookArg->start_rtn;
     void *routine_arg = hookArg->arg;
     delete hookArg;
-    char thread_name[16]{};
-    prctl(PR_GET_NAME, thread_name);
-    LOGI("HookThreadStart %s", thread_name);
     start_rtn(routine_arg);
+    if (myTrace.isDebug()) {
+        char thread_name[16]{};
+        prctl(PR_GET_NAME, thread_name);
+        LOGD(true, "HookThreadStart %s", thread_name);
+    }
 }
 
 int pthread_create_proxy(pthread_t *pthread_ptr, pthread_attr_t const *attr,
                          void *(*start_routine)(void *), void *arg) {
     SHADOWHOOK_STACK_SCOPE();
     myTrace.beginSection("pthread_create_proxy");
-//    auto *hook_arg = new StartRtnArg(arg, start_routine);
-//    int r = SHADOWHOOK_CALL_PREV(pthread_create_proxy, pthread_ptr, attr,
-//                                 reinterpret_cast<void *(*)(void *)>(hookThreadStart), hook_arg);
-    int r = SHADOWHOOK_CALL_PREV(pthread_create_proxy, pthread_ptr, attr, start_routine, arg);
+    auto *hook_arg = new StartRtnArg(arg, start_routine);
+    int r = SHADOWHOOK_CALL_PREV(pthread_create_proxy, pthread_ptr, attr,
+                                 reinterpret_cast<void *(*)(void *)>(hookThreadStart), hook_arg);
     myTrace.endSection();
     pid_t tid = pthread_gettid_np(*pthread_ptr);
     myTrace.beginSection("pthread_create" + std::to_string(tid));
@@ -353,4 +353,8 @@ void Trace::beginSection(const std::string &method) {
 
 void Trace::endSection() {
     ATrace_endSection();
+}
+
+bool Trace::isDebug() const {
+    return traceConfig.debug;
 }

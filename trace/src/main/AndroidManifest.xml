@@ -1,10 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <permission android:name="${applicationId}.TRACE_BROADCAST" />
+    <uses-permission android:name="${applicationId}.TRACE_BROADCAST" />
+
     <application>
         <provider
             android:name="com.joychic.trace.InitProvider"
             android:authorities="${applicationId}.trace.InitProvider"
-            android:exported="false" />
+            android:exported="false"
+            android:multiprocess="true" />
+
+        <receiver
+            android:name="com.joychic.trace.TraceReceiver"
+            android:enabled="true"
+            android:exported="true"
+            android:permission="${applicationId}.TRACE_BROADCAST">
+            <intent-filter>
+                <action android:name="TRACE.ACTION_START" />
+                <action android:name="TRACE.ACTION_STOP" />
+                <action android:name="TRACE.ACTION_OPEN" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

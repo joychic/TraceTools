@@ -7,25 +7,25 @@ MTrace is an Android dynamic ATrace tool that utilizes ART method hooks. Work wi
 Add the following lines to build.gradle on your app module:
 ```
 dependencies {
-   implementation 'io.gitee.joychic:TraceTools:0.0.1'
-    // replace "0.0.1" with any available version
+   implementation 'io.gitee.joychic:TraceTools:0.0.3'
 }
 ```
 
 ### Quick Tutorial
-
-Setup MTrace on App startup, say your Application class, add these lines:
-
+  
+start Trace :
+```agsl
+adb shell am broadcast -a TRACE.ACTION_START -f 0x01000000
 ```
-    override fun onCreate() {
-        super.onCreate()
-        MTrace.start(
-            MTrace.ConfigBuilder()
-                .isDebug(false)
-                .setMethodName("com.joychic.trace")
-                .build()
-        )
-    }
+
+close Trace :
+```agsl
+   adb shell am broadcast -a TRACE.ACTION_STOP -f 0x01000000
+```
+
+with multi user mode, use `--user` send action 
+```agsl
+  adb shell am broadcast --user 0 -a TRACE.ACTION_START  [package]
 ```
 
 #### [Download record_android_trace](https://perfetto.dev/docs/quickstart/android-tracing)

@@ -10,9 +10,6 @@ lifecycleLivedataKtx = "2.8.7"
 material = "1.12.0"
 constraintlayout = "2.2.0"
 shadowhook = "1.0.9"
-tracetools = "0.0.2-SNAPSHOT"
-xdl = "2.1.1"
-xunwind = "2.0.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -25,9 +22,6 @@ androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
 shadowhook = { module = "com.bytedance.android:shadowhook", version.ref = "shadowhook" }
-tracetools = { module = "io.gitee.joychic:TraceTools", version.ref = "tracetools" }
-xdl = { module = "io.github.hexhacking:xdl", version.ref = "xdl" }
-xunwind = { module = "io.github.hexhacking:xunwind", version.ref = "xunwind" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

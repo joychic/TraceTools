@@ -11,12 +11,17 @@ cmake_minimum_required(VERSION 3.4.1)
 #execute_process(COMMAND rm ${CMAKE_CURRENT_SOURCE_DIR}/src/main/libs/${ANDROID_ABI}/)
 #set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/main/libs/${ANDROID_ABI}/)
 find_package(shadowhook REQUIRED CONFIG)
-find_package(xunwind REQUIRED CONFIG)
 
-aux_source_directory(cpp TRACE)
 include_directories(
         ${TRACE}
 )
+
+set(FILES
+        cpp/ArtMethod.cpp
+        cpp/jni_bridge.cpp
+        cpp/Trace.cpp
+)
+
 
 # Creates and names a library, sets it as either STATIC
 # or SHARED, and provides the relative paths to its source code.
@@ -28,7 +33,7 @@ add_library( # Sets the name of the library.
 
         # Sets the library as a shared library.
         SHARED
-        ${TRACE}
+        ${FILES}
         )
 
 
@@ -56,6 +61,12 @@ target_link_libraries( # Specifies the target library.
         # included in the NDK.
         ${log-lib}
         shadowhook::shadowhook
-        xunwind::xunwind
+)
+
+TARGET_COMPILE_OPTIONS(
+        ${TARGET}
+        PRIVATE $<$<COMPILE_LANGUAGE:C>:-std=c99>
+        PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-std=c++17 -fno-exceptions -fno-rtti>
+        PRIVATE -fstack-protector
 )
 

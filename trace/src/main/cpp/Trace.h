@@ -1,5 +1,5 @@
 //
-// Created by 驰  蒋 on 2024/7/25.
+// Created by 驰蒋 on 2024/7/25.
 //
 
 #ifndef ANDROIDTRACE_TRACE_H
@@ -7,7 +7,6 @@
 
 #include <string>
 #include "jni.h"
-#include "shadowhook.h"
 #include "ArtMethod.h"
 #include <stack>
 #include <array>
@@ -64,6 +63,8 @@ public:
 
     void endSection();
 
+    [[nodiscard]] bool isDebug() const;
+
 private:
     Config traceConfig;
 
@@ -84,9 +85,10 @@ private:
 class StartRtnArg {
 public:
     void *arg;
+
     void *(*start_rtn)(void *);
 
-    StartRtnArg(void *arg,  void *(*start_rtn)(void *)) {
+    StartRtnArg(void *arg, void *(*start_rtn)(void *)) {
         this->arg = arg;
         this->start_rtn = start_rtn;
     }

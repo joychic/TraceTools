@@ -1,5 +1,6 @@
 package com.joychic.trace
 
+import android.annotation.SuppressLint
 import android.content.ContentProvider
 import android.content.ContentValues
 import android.database.Cursor
@@ -12,11 +13,12 @@ import android.net.Uri
  * Date: 2024/11/9
  */
 class InitProvider : ContentProvider() {
+    @SuppressLint("UnspecifiedRegisterReceiverFlag")
     override fun onCreate(): Boolean {
-        MTrace.start(
-            MTrace.ConfigBuilder()
-                .build()
-        )
+        context?.apply { TraceReceiver.initTraceReceiver(this) }
+        if (TraceReceiver.isTraceOpen()) {
+            MTrace.start()
+        }
         return true
     }
 
